@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phone Number Validator</title>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 2rem auto; padding: 0 1rem; }
+    input, button { padding: 0.5rem; font-size: 1rem; margin: 0.25rem 0; }
+    #result { margin-top: 1rem; white-space: pre-wrap; background: #f4f4f4; padding: 1rem; border-radius: 4px; }
+    .valid { color: green; }
+    .invalid { color: red; }
+  </style>
+</head>
+<body>
+  <h1>Phone Number Validator</h1>
+  <form id="phoneForm">
+    <input type="text" id="phoneInput" placeholder="Enter phone number (e.g., +254703903056)" required>
+    <button type="submit">Validate</button>
+  </form>
+  <div id="result"></div>
+
+  <script>
+    const form = document.getElementById('phoneForm');
+    const resultDiv = document.getElementById('result');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const phoneNumber = document.getElementById('phoneInput').value.trim();
+      if (!phoneNumber) return;
+
+      resultDiv.innerHTML = 'Checking...';
+
+      try {
+        const response = await fetch('/validate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phoneNumber }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          let html = `<strong>Result:</strong><br>`;
+          html += `Valid: <span class="${data.valid ? 'valid' : 'invalid'}">${data.valid}</span><br>`;
+          if (data.valid) {
+            html += `Region Code: ${data.regionCode}<br>`;
+            html += `National Number: ${data.nationalNumber}<br>`;
+            html += `Country Code: ${data.countryCode}<br>`;
+            html += `International: ${data.internationalFormat}<br>`;
+            html += `E.164: ${data.e164Format}`;
+          } else {
+            html += `Message: ${data.message || 'Invalid phone number'}`;
+          }
+          resultDiv.innerHTML = html;
+        } else {
+          resultDiv.innerHTML = `<span class="invalid">Error: ${data.error || 'Unknown error'}</span>`;
+        }
+      } catch (error) {
+        resultDiv.innerHTML = `<span class="invalid">Network error: ${error.message}</span>`;
+      }
+    });
+  </script>
+</body>
+</html>
